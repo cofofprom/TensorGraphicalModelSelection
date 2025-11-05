@@ -21,7 +21,11 @@ class TensorGraphicalModel:
         self.generatePrecisions(precision_generate_fn)
 
     def generatePrecisions(self, generate_fn):
-        self.precisions = [generate_fn(self.dims[k], self.densities[k]) for k in range(self.order)]
+        precisions = [generate_fn(self.dims[k], self.densities[k]) for k in range(self.order)]
+        self.updatePrecisions(precisions)
+
+    def updatePrecisions(self, new_precisions):
+        self.precisions = new_precisions
         self.covariances = [la.inv(self.precisions[k]) for k in range(self.order)]
         self.sqrt_cache = [sqrtm(self.covariances[k]) for k in range(self.order)]
 

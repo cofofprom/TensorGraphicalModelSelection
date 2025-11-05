@@ -33,8 +33,10 @@ def evaluateSetOfModels(config):
     for d in np.linspace(0.1, 0.9, 10):
         for n_model in range(config['S_sg']):
             model = TensorGraphicalModel(config['dims'], [d for _ in range(config['order'])])
+            non_identity_precision = model.precisions[config['non_identity_way']]
             
-            new_precisions = [model.precisions[0] for dim in model.dims]
+            new_precisions = [np.eye(dim) for dim in model.dims]
+            new_precisions[config['non_identity_way']] = non_identity_precision
             model.updatePrecisions(new_precisions)
 
             single_results = evaluateSingleModel(model, config)

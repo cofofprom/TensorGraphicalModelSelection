@@ -4,6 +4,7 @@ import numpy as np
 import numpy.linalg as la
 import tensorly as tl
 from scipy.linalg import sqrtm
+from scipy.stats import chi2
 
 class TensorGraphicalModel:
     """
@@ -29,10 +30,24 @@ class TensorGraphicalModel:
         self.covariances = [la.inv(self.precisions[k]) for k in range(self.order)]
         self.sqrt_cache = [sqrtm(self.covariances[k]) for k in range(self.order)]
 
-    def rvs(self, size=1):
+    def rvs(self, size=1, eps=0., dof=3):
         def sample():
             Z = tl.tensor(np.random.randn(*self.dims))
             Z = tl.tenalg.multi_mode_dot(Z, self.sqrt_cache)
             return Z
 
-        return np.asarray([sample() for _ in range(size)])
+        samples = list()
+
+        for _ in range(size):
+            Z = sample()
+
+            if np.random.uniform(0, 1) < eps:
+                s = chi2.rvs(dof)
+                r = np.sqrt(dof / s)
+
+                samples.append(r * Z)
+            else:
+                samples.append(Z)
+                
+
+        return np.asarray(samples)

@@ -5,6 +5,7 @@ import argparse
 import os
 import json
 import numpy as np
+import numpy.linalg as la
 import pandas as pd
 import uuid
 
@@ -22,11 +23,13 @@ def evaluateSingleModel(model, config):
             pred_edges = matrix2Edges(pred_omegas[k])
 
             metrics = evaluate(true_edges, pred_edges)
+
+            metrics.append(la.norm(model.precisions[k] - pred_omegas[k], 'fro'))
             metrics.append(k)
             
             result.append(metrics)
 
-    return pd.DataFrame(result, columns=['tn', 'fp', 'fn', 'tp', 'fdr', 'fomr', 'tpr', 'tnr', 'ba', 'f1', 'mcc', 'way'])
+    return pd.DataFrame(result, columns=['tn', 'fp', 'fn', 'tp', 'fdr', 'fomr', 'tpr', 'tnr', 'ba', 'f1', 'mcc', 'fro_diff', 'way'])
 
 def evaluateSetOfModels(config):
     result = []

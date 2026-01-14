@@ -2,6 +2,8 @@ import numpy as np
 import numpy.linalg as la
 from sklearn.covariance import graphical_lasso
 from scipy.linalg import sqrtm
+from scipy.stats import norm
+from utils import matrix2Edges
 
 def tlasso(data, reg_param, T=100):
     thres = 1e-6
@@ -50,3 +52,34 @@ def tlasso(data, reg_param, T=100):
             break
             
     return Omega_list
+
+def vectorTests(data, pred_omega, alpha):
+    n_samples, dim = data.shape
+    regression_params = []
+
+    for i in range(dim):
+        regression_param = -np.delete(pred_omega[i, :], i) / pred_omega[i, i]
+        regression_params.append(regression_param)
+
+    regression_params = np.asarray(regression_params)
+
+    residuals = np.zeros(data.shape, dtype=np.float64) 
+
+    for l, sample in enumerate(data):
+        for i in range(dim):
+            residual = sample[i] - (np.delete(sample[:], i).T @ regression_params[i])
+            residuals[l, i] = residual
+
+    residual_cov = np.cov(residuals, rowvar=False)
+
+    statistic = np.zeros(residual_cov.shape, dtype=np.float64)
+
+    for i in range(dim):
+        for j in range(i + 1, dim):            
+            bias_correction = residual_cov[i, i] * regression_params[j, i] + residual_cov[j, j] * regression_params[i, j - 1]
+            stat = residual_cov[i, j] + bias_correction
+            norm_stat = np.sqrt((n_samples - 1) / (residual_cov[i, i] * residual_cov[j, j])) * stat
+            statistic[i, j] = norm_stat
+
+    return matrix2Edges((2 * norm.sf(np.abs(statistic)) < alpha).astype(int))
+        

@@ -51,3 +51,11 @@ class TensorGraphicalModel:
                 
 
         return np.asarray(samples)
+
+class VectorGraphicalModel(TensorGraphicalModel):
+    def __init__(self, dim, density, precision_generate_fn=generateDominantDiagonal):
+        super().__init__([dim,], [density,], precision_generate_fn)
+        self.dim = dim
+        self.density = density
+        self.covariance = self.covariances[0]
+        self.precision = self.precisions[0]
